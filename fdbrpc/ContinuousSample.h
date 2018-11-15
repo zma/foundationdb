@@ -22,6 +22,7 @@
 #define CONTINUOUSSAMPLE_H
 #pragma once
 
+#include <cmath>
 #include "flow/Platform.h"
 #include "flow/IRandom.h"
 #include <vector>
