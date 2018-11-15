@@ -26,6 +26,7 @@
 #pragma warning( disable: 4345 )
 #pragma warning( error: 4239 )
 
+#include <cmath>
 #include <vector>
 #include <queue>
 #include <map>
@@ -177,12 +178,6 @@ public:
 		}
 	}
 
-	bool operator == (Optional const& o) const {
-		return present() == o.present() && (!present() || get() == o.get());
-	}
-	bool operator != (Optional const& o) const {
-		return !(*this == o);
-	}
 	// Ordering: If T is ordered, then Optional() < Optional(t) and (Optional(u)<Optional(v))==(u<v)
 	bool operator < (Optional const& o) const {
 		if (present() != o.present()) return o.present();
@@ -193,6 +188,30 @@ private:
 	typename std::aligned_storage< sizeof(T), __alignof(T) >::type value;
 	bool valid;
 };
+
+template <class T>
+bool operator == (Optional<T> const& lhs, Optional<T> const& rhs) {
+	return lhs.present() == rhs.present() && (!lhs.present() || lhs.get() == rhs.get());
+}
+
+template <class T>
+bool operator != (Optional<T> const& lhs, Optional<T> const& rhs) {
+	return !(lhs == rhs);
+}
+
+// Old versions of GCC fail to recognize user-defined conversions that would
+// let the above operators work.  So instead, we offer explicit guidence to GCC
+// to recognize these cases.
+// SOMEDAY: Remove when we're willing to deprecate GCC 4.9.1
+template <class T, class U>
+bool operator == (Optional<T> const& lhs, U const& rhs) {
+	return lhs == Optional<T>(rhs);
+}
+
+template <class T, class U>
+bool operator != (Optional<T> const& lhs, U const& rhs) {
+	return lhs != Optional<T>(rhs);
+}
 
 template <class T>
 class ErrorOr {
@@ -254,19 +273,6 @@ public:
 		}
 	}
 
-	bool operator == (ErrorOr const& o) const {
-		return error == o.error && (!present() || get() == o.get());
-	}
-	bool operator != (ErrorOr const& o) const {
-		return !(*this == o);
-	}
-
-	bool operator < (ErrorOr const& o) const {
-		if (error != o.error) return error < o.error;
-		if (!present()) return false;
-		return get() < o.get();
-	}
-
 	bool isError() const { return error.code() != invalid_error_code; }
 	bool isError(int code) const { return error.code() == code; }
 	Error getError() const { ASSERT(isError()); return error; }
@@ -275,6 +281,36 @@ private:
 	typename std::aligned_storage< sizeof(T), __alignof(T) >::type value;
 	Error error;
 };
+
+
+template <typename T>
+bool operator == (ErrorOr<T> const& lhs, ErrorOr<T> const& rhs) {
+	return lhs.error == rhs.error && (!lhs.present() || lhs.get() == rhs.get());
+}
+template <typename T>
+bool operator != (ErrorOr<T> const& lhs, ErrorOr<T> const& rhs) {
+	return !(lhs == rhs);
+}
+
+// Old versions of GCC fail to recognize user-defined conversions that would
+// let the above operators work.  So instead, we offer explicit guidence to GCC
+// to recognize these cases.
+// SOMEDAY: Remove when we're willing to deprecate GCC 4.9.1
+template <class T, class U>
+bool operator == (ErrorOr<T> const& lhs, U const& rhs) {
+	return lhs == ErrorOr<T>(rhs);
+}
+template <class T, class U>
+bool operator != (ErrorOr<T> const& lhs, U const& rhs) {
+	return lhs != ErrorOr<T>(rhs);
+}
+
+template <typename T>
+bool operator < (ErrorOr<T> const& lhs, ErrorOr<T> const& rhs) {
+	if (lhs.error != rhs.error) return lhs.error < rhs.error;
+	if (!lhs.present()) return false;
+	return lhs.get() < rhs.get();
+}
 
 template <class T>
 struct Callback {
