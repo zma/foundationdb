@@ -25,6 +25,8 @@
 #include <math.h> // For _set_FMA3_enable workaround in platformInit
 #endif
 
+#include <sys/sysmacros.h>
+
 #include "flow/Platform.h"
 #include "flow/Arena.h"
 
@@ -1183,7 +1185,7 @@ SystemStatistics getSystemStatistics(std::string dataFolder, uint32_t ip, System
 	uint64_t nowBusyTicks = (*statState)->lastBusyTicks;
 	uint64_t nowReads = (*statState)->lastReads;
 	uint64_t nowWrites = (*statState)->lastWrites;
-	uint64_t nowWriteSectors = (*statState)->lastWriteSectors; 
+	uint64_t nowWriteSectors = (*statState)->lastWriteSectors;
 	uint64_t nowReadSectors = (*statState)->lastReadSectors;
 
 	if(dataFolder != "") {
@@ -1580,7 +1582,7 @@ int getRandomSeed() {
 		retryCount++;
 		if (read(devRandom, &randomSeed, sizeof(randomSeed)) != sizeof(randomSeed) ) {
 			TraceEvent(SevError, "OpenURandom").GetLastError();
-			throw platform_error();	
+			throw platform_error();
 		}
 	} while (randomSeed == 0 && retryCount < FLOW_KNOBS->RANDOMSEED_RETRY_LIMIT);
 	close(devRandom);
@@ -2558,8 +2560,8 @@ volatile thread_local bool profileThread = false;
 
 volatile int profilingEnabled = 1;
 
-void setProfilingEnabled(int enabled) { 
-	profilingEnabled = enabled; 
+void setProfilingEnabled(int enabled) {
+	profilingEnabled = enabled;
 }
 
 void profileHandler(int sig) {
